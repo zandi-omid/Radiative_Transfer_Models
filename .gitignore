@@ -9,3 +9,4 @@ __pycache__/
 # Generated homework output
 *.png
 problem*_results.txt
+part*_results.txt
