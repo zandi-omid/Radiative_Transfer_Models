@@ -12,4 +12,4 @@ first homework assignment and analyses of photon-count convergence,
 run-to-run variability, incident direction, and optical depth.
 
 The `HW2/` folder extends the model to Henyey-Greenstein anisotropic
-scattering.
+scattering and absorption through the single-scattering albedo.

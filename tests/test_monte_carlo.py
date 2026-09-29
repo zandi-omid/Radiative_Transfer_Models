@@ -18,7 +18,11 @@ from models.monte_carlo import (
 class MonteCarloTransportTests(unittest.TestCase):
     def test_conservation_and_scattering(self):
         result = MonteCarloTransport(workers=2).run(1000, seed=101)
-        self.assertAlmostEqual(result.reflectivity + result.transmissivity, 1.0)
+        self.assertAlmostEqual(
+            result.reflectivity + result.transmissivity + result.absorptivity,
+            1.0,
+        )
+        self.assertEqual(result.absorptivity, 0.0)
         self.assertGreater(result.mean_scatterings, 0)
         self.assertGreaterEqual(result.elapsed_seconds, 0)
 
@@ -39,6 +43,8 @@ class MonteCarloTransportTests(unittest.TestCase):
             MonteCarloTransport().run(0)
         with self.assertRaises(ValueError):
             MonteCarloTransport(g=1.0)
+        with self.assertRaises(ValueError):
+            MonteCarloTransport(omega0=1.1)
 
     def test_hg_samples_have_expected_mean_cosine(self):
         rng = np.random.default_rng(123)
@@ -57,6 +63,17 @@ class MonteCarloTransportTests(unittest.TestCase):
     def test_hg_transport_conserves_photons(self):
         result = MonteCarloTransport(g=0.75, workers=2).run(2_000, seed=42)
         self.assertAlmostEqual(result.reflectivity + result.transmissivity, 1.0)
+
+    def test_absorbing_transport_conserves_photons(self):
+        result = MonteCarloTransport(g=0.75, omega0=0.85, workers=2).run(
+            2_000,
+            seed=42,
+        )
+        self.assertAlmostEqual(
+            result.reflectivity + result.transmissivity + result.absorptivity,
+            1.0,
+        )
+        self.assertGreater(result.absorptivity, 0.0)
 
 
 if __name__ == "__main__":

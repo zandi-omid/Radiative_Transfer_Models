@@ -11,6 +11,7 @@ import numpy as np
 class SimulationResult:
     reflectivity: float
     transmissivity: float
+    absorptivity: float
     mean_scatterings: float
     elapsed_seconds: float
 
@@ -45,10 +46,10 @@ def scatter_direction(mu_old, rng, g):
 
 
 def _simulate_chunk(args):
-    n_photons, tau, mu0, l0, g, seed_sequence = args
+    n_photons, tau, mu0, l0, g, omega0, seed_sequence = args
     rng = np.random.default_rng(seed_sequence)
     z_top = tau * l0
-    reflected = transmitted = scatterings = 0
+    reflected = transmitted = absorbed = scatterings = 0
 
     for _ in range(n_photons):
         z = z_top
@@ -61,28 +62,46 @@ def _simulate_chunk(args):
             if z < 0.0:
                 transmitted += 1
                 break
+
+            # omega0 is the probability of scattering at an interaction.
+            # Avoid drawing an extra random number when omega0=1 so the
+            # validated nonabsorbing simulations retain their exact sequence.
+            if omega0 < 1.0 and rng.random() >= omega0:
+                absorbed += 1
+                break
             scatterings += 1
             mu = scatter_direction(mu, rng, g)
 
-    return reflected, transmitted, scatterings
+    return reflected, transmitted, absorbed, scatterings
 
 
 class MonteCarloTransport:
     """Run independent photon histories with reproducible worker streams."""
 
-    def __init__(self, tau=4.0, mu0=-0.7, l0=1.0, g=0.0, workers=24):
+    def __init__(
+        self,
+        tau=4.0,
+        mu0=-0.7,
+        l0=1.0,
+        g=0.0,
+        omega0=1.0,
+        workers=24,
+    ):
         if tau <= 0 or l0 <= 0:
             raise ValueError("tau and l0 must be positive")
         if not -1.0 <= mu0 < 0.0:
             raise ValueError("mu0 must be in [-1, 0)")
         if not -1.0 < g < 1.0:
             raise ValueError("g must be between -1 and 1")
+        if not 0.0 <= omega0 <= 1.0:
+            raise ValueError("omega0 must be between 0 and 1")
         if workers < 1:
             raise ValueError("workers must be positive")
         self.tau = tau
         self.mu0 = mu0
         self.l0 = l0
         self.g = g
+        self.omega0 = omega0
         self.workers = min(workers, cpu_count())
 
     def run(self, n_photons, seed=42):
@@ -93,7 +112,7 @@ class MonteCarloTransport:
         chunk_sizes[: n_photons % n_workers] += 1
         seeds = np.random.SeedSequence(seed).spawn(n_workers)
         args = [
-            (int(size), self.tau, self.mu0, self.l0, self.g, stream)
+            (int(size), self.tau, self.mu0, self.l0, self.g, self.omega0, stream)
             for size, stream in zip(chunk_sizes, seeds)
         ]
 
@@ -107,10 +126,12 @@ class MonteCarloTransport:
 
         reflected = sum(count[0] for count in counts)
         transmitted = sum(count[1] for count in counts)
-        scatterings = sum(count[2] for count in counts)
+        absorbed = sum(count[2] for count in counts)
+        scatterings = sum(count[3] for count in counts)
         return SimulationResult(
-            reflected / n_photons,
-            transmitted / n_photons,
-            scatterings / n_photons,
-            elapsed,
+            reflectivity=reflected / n_photons,
+            transmissivity=transmitted / n_photons,
+            absorptivity=absorbed / n_photons,
+            mean_scatterings=scatterings / n_photons,
+            elapsed_seconds=elapsed,
         )
