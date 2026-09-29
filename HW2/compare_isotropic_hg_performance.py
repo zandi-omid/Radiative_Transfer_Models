@@ -102,11 +102,10 @@ def save_results(raw_rows, summary):
 
 
 def make_figure(summary):
-    fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+    fig, ax = plt.subplots(figsize=(9, 6))
     for g, label in MODELS:
         subset = summary[summary[:, 1] == g]
-        axes[0].plot(subset[:, 0], subset[:, 5], "o-", linewidth=2, label=label)
-        axes[1].errorbar(
+        ax.errorbar(
             subset[:, 0],
             subset[:, 3],
             yerr=subset[:, 4],
@@ -116,20 +115,14 @@ def make_figure(summary):
             label=label,
         )
 
-    axes[0].set(
-        xlabel=r"Optical Depth, $\tau$",
-        ylabel="Mean Scatterings per Photon",
-        title="Scattering Work",
-    )
-    axes[1].set(
+    ax.set(
         xlabel=r"Optical Depth, $\tau$",
         ylabel="Mean Wall-Clock Time (s)",
         title=f"Computation Time ({N_REPEATS} Repeats)",
     )
-    for ax in axes:
-        ax.set_xticks(OPTICAL_DEPTHS)
-        ax.grid(True, alpha=0.3)
-        ax.legend()
+    ax.set_xticks(OPTICAL_DEPTHS)
+    ax.grid(True, alpha=0.3)
+    ax.legend()
     fig.suptitle(
         rf"Isotropic and HG Cost Comparison: $N={N_PHOTONS:,}$, "
         rf"$\mu_0={MU0}$, $\omega_0={OMEGA0}$, {N_WORKERS} workers"
