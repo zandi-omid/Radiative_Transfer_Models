@@ -123,18 +123,13 @@ The function `scatter_direction()` rotates the locally sampled scattering
 direction into the global vertical coordinate system using
 
 $$
-\mu_{\mathrm{new}} =
-\mu_{\mathrm{old}}\cos\Theta
-+ \sqrt{1-\mu_{\mathrm{old}}^2}\,\sin\Theta\cos\phi,
+\mu_{\mathrm{new}} = \mu_{\mathrm{old}}\cos\Theta + \sqrt{1-\mu_{\mathrm{old}}^2}\,\sin\Theta\,\cos\phi.
 $$
 
 or equivalently,
 
 $$
-\mu_{\mathrm{new}} =
-\mu_{\mathrm{old}}\cos\Theta
-+ \sqrt{1-\mu_{\mathrm{old}}^2}
-  \sqrt{1-\cos^2\Theta}\cos\phi.
+\mu_{\mathrm{new}} = \mu_{\mathrm{old}}\cos\Theta + \sqrt{1-\mu_{\mathrm{old}}^2}\,\sqrt{1-\cos^2\Theta}\,\cos\phi.
 $$
 
 Only $\mu_{\mathrm{new}}$ must be retained because this plane-parallel model
