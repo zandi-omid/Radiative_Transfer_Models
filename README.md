@@ -10,3 +10,6 @@ simulations to run in parallel and remain reproducible.
 The shared transport model is in `models/`. The `HW1/` folder contains the
 first homework assignment and analyses of photon-count convergence,
 run-to-run variability, incident direction, and optical depth.
+
+The `HW2/` folder extends the model to Henyey-Greenstein anisotropic
+scattering.
