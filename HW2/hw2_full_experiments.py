@@ -180,24 +180,30 @@ def optical_depth_sweep():
 
 
 def plot_rta_comparison(rows, x_column, xlabel, title, filename):
-    fig, axes = plt.subplots(1, 3, figsize=(16, 5), sharex=True)
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10), sharex=True)
+    active_axes = axes.flat[:3]
     labels = ["Reflectivity (R)", "Transmissivity (T)", "Absorptivity (A)"]
     for omega0 in ALBEDOS:
         subset = rows[rows[:, 0] == omega0]
-        for ax, column in zip(axes, (2, 3, 4)):
+        for ax, column in zip(active_axes, (2, 3, 4)):
             ax.plot(
                 subset[:, x_column],
                 subset[:, column],
                 "o-",
+                linewidth=2.5,
+                markersize=7,
                 label=rf"$\omega_0={omega0:.2f}$",
             )
-    for ax, ylabel in zip(axes, labels):
-        ax.set(xlabel=xlabel, ylabel=ylabel)
+    for ax, ylabel in zip(active_axes, labels):
+        ax.set_xlabel(xlabel, fontsize=16)
+        ax.set_ylabel(ylabel, fontsize=16)
+        ax.tick_params(axis="both", labelsize=14)
         ax.grid(True, alpha=0.3)
-    axes[-1].legend()
-    fig.suptitle(title)
-    fig.tight_layout()
-    fig.savefig(OUTPUT_DIR / filename, dpi=300)
+    active_axes[-1].legend(fontsize=13)
+    axes.flat[-1].axis("off")
+    fig.suptitle(title, fontsize=21)
+    fig.tight_layout(rect=(0, 0, 1, 0.96))
+    fig.savefig(OUTPUT_DIR / filename, dpi=600)
     plt.close(fig)
 
 
