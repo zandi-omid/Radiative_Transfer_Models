@@ -1,4 +1,4 @@
-"""Monte Carlo photon transport in a nonabsorbing plane-parallel layer."""
+"""Monte Carlo transport with isotropic or HG scattering and optional absorption."""
 
 from dataclasses import dataclass
 from multiprocessing import Pool, cpu_count

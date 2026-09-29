@@ -44,25 +44,141 @@ For nonabsorbing simulations, `omega0 = 1`, `A = 0`, and `R + T = 1`.
 For isotropic scattering (`g = 0`), the new vertical direction cosine is
 uniformly sampled from `[-1, 1]`.
 
-For Henyey-Greenstein scattering, the cosine of the scattering angle relative
-to the photon's current direction is sampled by inverse CDF:
+#### Henyey-Greenstein Phase Function
 
-```text
-q = (1 - g^2) / (1 - g + 2 g xi)
-cos(theta) = (1 + g^2 - q^2) / (2 g)
-```
+The Henyey-Greenstein (HG) phase function describes the angular distribution
+of scattered radiation:
 
-A uniform azimuth `phi` is then used to rotate that scattering angle into the
-vertical coordinate system:
+$$
+P(\Theta) = \frac{1}{4\pi}
+\frac{1-g^2}{\left(1+g^2-2g\cos\Theta\right)^{3/2}}.
+$$
 
-```text
-mu_new = mu_old cos(theta)
-         + sqrt(1 - mu_old^2) sin(theta) cos(phi)
-```
+The scattering angle $\Theta$ is measured relative to the photon's **current
+incoming direction**, rather than relative to the atmospheric vertical. The
+asymmetry factor $g$ controls the preferred scattering direction:
 
-Here, `cos(theta)` is relative to the incoming photon direction, while `mu_old`
-and `mu_new` are relative to the vertical. The implementation explicitly uses
-the isotropic limit when `g` is zero.
+- $g=0$ gives isotropic scattering.
+- $g>0$ favors forward scattering, with directions near the incoming photon
+  direction receiving greater probability.
+- HW2 uses $g=0.75$, representing strongly forward-peaked scattering.
+
+#### Inverse-CDF Sampling
+
+Define the scattering-angle cosine as
+
+$$
+\mu_s = \cos\Theta.
+$$
+
+The function `sample_hg_cos_theta()` samples $\mu_s$ by inverse-transform
+sampling. It first draws $\xi\sim U(0,1)$ and computes
+
+$$
+q = \frac{1-g^2}{1-g+2g\xi},
+$$
+
+followed by
+
+$$
+\cos\Theta = \frac{1+g^2-q^2}{2g}.
+$$
+
+This is conceptually the same inverse-transform method used to sample the
+exponential free path,
+
+$$
+l=-l_0\ln(1-\xi),
+$$
+
+but the HG inverse CDF samples a scattering angle instead of a path length.
+For $g=0$, `sample_hg_cos_theta()` handles the isotropic limit separately by
+sampling $\cos\Theta$ uniformly from $[-1,1]$. In the actual isotropic
+transport path, `scatter_direction()` directly samples the new vertical
+direction cosine from this uniform distribution, preserving the original HW1
+behavior.
+
+#### Random Azimuth
+
+Sampling $\Theta$ fixes the opening angle of a cone around the incoming photon
+direction, but the photon may scatter anywhere around that cone. The HG phase
+function does not impose a preferred azimuthal direction, so the code
+independently draws
+
+$$
+\phi=2\pi\xi_2, \qquad \xi_2\sim U(0,1).
+$$
+
+#### Rotation into the Vertical Coordinate System
+
+Three direction cosines must be distinguished:
+
+- $\cos\Theta$ is relative to the **old photon direction**.
+- $\mu_{\mathrm{old}}$ is the old photon direction cosine relative to the
+  atmospheric vertical.
+- $\mu_{\mathrm{new}}$ is the new photon direction cosine relative to the
+  atmospheric vertical.
+
+The function `scatter_direction()` rotates the locally sampled scattering
+direction into the global vertical coordinate system using
+
+$$
+\mu_{\mathrm{new}} =
+\mu_{\mathrm{old}}\cos\Theta
++ \sqrt{1-\mu_{\mathrm{old}}^2}\,\sin\Theta\cos\phi,
+$$
+
+or equivalently,
+
+$$
+\mu_{\mathrm{new}} =
+\mu_{\mathrm{old}}\cos\Theta
++ \sqrt{1-\mu_{\mathrm{old}}^2}
+  \sqrt{1-\cos^2\Theta}\cos\phi.
+$$
+
+Only $\mu_{\mathrm{new}}$ must be retained because this plane-parallel model
+tracks photon position only along the vertical $z$ coordinate. The horizontal
+$x$ and $y$ positions and direction components do not affect whether a photon
+leaves through the top or bottom boundary.
+
+#### Scattering Algorithm
+
+For each interaction inside the layer, the model performs these steps:
+
+1. Sample the exponential free path.
+2. Move the photon using $\Delta z=\mu l$.
+3. Check whether the photon exits through the top or bottom boundary.
+4. If absorption is enabled, use $\omega_0$ to decide whether the interaction
+   causes scattering or absorption.
+5. If scattering occurs, sample the HG scattering angle $\Theta$.
+6. Sample an independent random azimuth $\phi$.
+7. Rotate the local scattering direction to obtain $\mu_{\mathrm{new}}$.
+8. Continue the photon trajectory using the new vertical direction cosine.
+
+### Single-Scattering Albedo
+
+The single-scattering albedo $\omega_0$ determines the outcome of an
+interaction inside the layer:
+
+$$
+P(\text{scattering})=\omega_0,
+\qquad
+P(\text{absorption})=1-\omega_0.
+$$
+
+An absorbed photon is terminated and added to the absorption count. Therefore,
+
+$$
+R+T+A=1.
+$$
+
+When $\omega_0=1$, every interaction scatters, absorption is zero, and the
+nonabsorbing conservation relation becomes
+
+$$
+R+T=1.
+$$
 
 ## Repository Structure
 
