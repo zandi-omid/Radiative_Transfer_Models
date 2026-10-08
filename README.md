@@ -194,7 +194,8 @@ Radiative_Transfer_Models/
 |   `-- compare_isotropic_hg_performance.py
 |-- HW3/
 |   |-- README.md
-|   `-- hw3_question1.py
+|   |-- hw3_question1.py
+|   `-- validate_question1.py
 |-- tests/
 |   |-- test_monte_carlo.py
 |   `-- test_two_stream.py
