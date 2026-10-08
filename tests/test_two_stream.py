@@ -5,6 +5,7 @@ import unittest
 import numpy as np
 
 from models.two_stream import METHODS, coefficients, reflect_transmit
+from HW3.validate_question1 import reference_coefficients, reference_reflect_transmit
 
 
 class TwoStreamTests(unittest.TestCase):
@@ -120,6 +121,46 @@ class TwoStreamTests(unittest.TestCase):
                     self.assertTrue(np.all(np.isfinite(transmitted)))
                     combinations += 1
         self.assertEqual(combinations, 12)
+
+    def test_table_1_coefficients_against_independent_values(self):
+        expected = {
+            "eddington": (0.34375, 0.14375, 0.21875, 0.78125),
+            "quadrature": (
+                0.3680607966083864,
+                0.1948557158514987,
+                0.1752404735808355,
+                0.8247595264191645,
+            ),
+        }
+        for method in METHODS:
+            actual = coefficients(0.9, 0.5, 0.75, method)[:4]
+            np.testing.assert_allclose(actual, expected[method], atol=1.0e-15)
+            np.testing.assert_allclose(
+                reference_coefficients(0.9, 0.5, 0.75, method),
+                expected[method],
+                atol=1.0e-15,
+            )
+
+    def test_analytical_solution_matches_independent_ode_solver(self):
+        depths = np.linspace(0.0, 10.0, 41)
+        for omega0 in (1.0, 0.9):
+            for mu0 in (0.9, 0.5, 0.1):
+                for method in METHODS:
+                    analytical = reflect_transmit(depths, omega0, mu0, 0.75, method)
+                    numerical = reference_reflect_transmit(
+                        depths, omega0, mu0, 0.75, method
+                    )
+                    np.testing.assert_allclose(analytical[0], numerical[0], atol=2e-9)
+                    np.testing.assert_allclose(analytical[1], numerical[1], atol=2e-9)
+
+    def test_thin_layer_negative_reflectivity_is_reproduced_by_ode_solver(self):
+        depth = 0.05
+        for method in METHODS:
+            analytical = reflect_transmit(depth, 1.0, 0.9, 0.75, method)
+            numerical = reference_reflect_transmit(depth, 1.0, 0.9, 0.75, method)
+            self.assertLess(analytical[0], 0.0)
+            self.assertGreater(analytical[1], 1.0)
+            np.testing.assert_allclose(analytical, numerical, atol=2e-10)
 
     def test_invalid_inputs(self):
         with self.assertRaises(ValueError):

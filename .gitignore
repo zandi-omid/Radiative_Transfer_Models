@@ -12,3 +12,6 @@ problem*_results.txt
 part*_results.txt
 HW2/results/
 HW3/results/
+
+# Local copies of reference papers
+HW3/*.pdf

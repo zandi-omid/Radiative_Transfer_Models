@@ -147,3 +147,58 @@ produce slightly negative reflectivity in optically thin layers. The largest
 case in this sweep is approximately $-0.0134$ for quadrature. These values are
 reported and plotted without clipping because they are a limitation of the
 closure, rather than a numerical overflow or nonfinite result.
+
+## Independent Validation
+
+The equations and coefficients were checked against the original Meador and
+Weaver (1980) paper. The signs and exponential factors in Eqs. (14)-(15), the
+definitions of $\alpha_1$, $\alpha_2$, and $k$ in Eqs. (16)-(18), the Table 1
+Eddington and quadrature coefficients, and $\gamma_4=1-\gamma_3$ all match the
+implementation.
+
+The conservative expression can also be obtained without assuming energy
+conservation. Normalize the incident direct flux to one and define
+$D=I^+-I^-$. When $\omega_0=1$, $\gamma_1=\gamma_2$ and
+$\gamma_3+\gamma_4=1$, so subtracting the two coupled flux equations gives
+
+$$
+\frac{dD}{d\tau}=-\frac{1}{\mu_0}\exp(-\tau/\mu_0),
+\qquad
+D(\tau)=R-[1-\exp(-\tau/\mu_0)].
+$$
+
+Substitution into the equation for $I^+$, followed by integration from the
+top to the black lower boundary, gives
+
+$$
+R(1+\gamma_1\tau)=\gamma_1\tau+
+(\gamma_3-\gamma_1\mu_0)[1-\exp(-\tau/\mu_0)],
+$$
+
+which is Eq. (24) and the limit used by the code. Thus $T=1-R$ follows for the
+conservative black-boundary problem.
+
+`HW3/validate_question1.py` supplies a separate numerical check. It integrates
+the coupled two-stream differential equations (Eqs. 12-13) with a fourth-order
+Runge-Kutta shooting method, rather than evaluating Eqs. (14)-(15). Run it with
+
+```bash
+python -m HW3.validate_question1
+```
+
+The comparison covers all 12 requested combinations over $0\leq\tau\leq10$
+and writes maximum absolute errors to
+`HW3/results/hw3_q1_validation_errors.csv`. The reported errors use a maximum
+RK4 step of 0.001. The largest absolute differences are
+$3.238\times10^{-12}$ for $R$ and $1.580\times10^{-12}$ for $T$. Halving the
+step from 0.002 changes the reference solution by less than
+$4.4\times10^{-11}$ for $R$ and $2.4\times10^{-11}$ for $T$.
+
+The negative thin-layer reflectivity is reproduced by this independent ODE
+solution. It is also anticipated by the paper's thin-layer analysis: the
+standard Eddington closure becomes negative when $g>2/(3\mu_0)$, and the paper
+notes a corresponding thin-layer limitation for quadrature. For
+$g=0.75$ and $\mu_0=0.9$, that condition is satisfied. In a conservative
+solution $T=1-R$, so a negative approximate $R$ necessarily produces $T>1$.
+These values are mathematical artifacts of the low-order angular closures,
+not clipping, floating-point cancellation, or a programming error.
