@@ -180,7 +180,8 @@ $$
 ```text
 Radiative_Transfer_Models/
 |-- models/
-|   `-- monte_carlo.py
+|   |-- monte_carlo.py
+|   `-- two_stream.py
 |-- HW1/
 |   |-- HW1.docx
 |   |-- hw1_monte_carlo_photons.py
@@ -191,8 +192,12 @@ Radiative_Transfer_Models/
 |   |-- hw2_part1_hg_scattering.py
 |   |-- hw2_full_experiments.py
 |   `-- compare_isotropic_hg_performance.py
+|-- HW3/
+|   |-- README.md
+|   `-- hw3_question1.py
 |-- tests/
-|   `-- test_monte_carlo.py
+|   |-- test_monte_carlo.py
+|   `-- test_two_stream.py
 `-- requirements.txt
 ```
 
@@ -269,6 +274,23 @@ This uses `N = 10,000` and `g = 0.75` throughout and evaluates
   absorptivity.
 
 Numerical tables and figures are written to `HW2/results/`.
+
+## HW3: Meador-Weaver Two-Stream Model
+
+HW3 Question 1 implements the analytical Eddington and quadrature two-stream
+approximations for a homogeneous layer over a black surface. It uses positive
+$\mu_0$ following the Meador-Weaver direct-beam convention and treats the
+conservative $k=0$ case with its analytical limit.
+
+```bash
+python -m HW3.hw3_question1
+```
+
+The experiment compares reflectivity and transmissivity over
+$0\leq\tau\leq10$ for $\mu_0=0.9,0.5,0.1$, $\omega_0=1.0,0.9$, and $g=0.75$.
+Four figures and a CSV table are saved under `HW3/results/`. See
+[`HW3/README.md`](HW3/README.md) for the equations, numerical treatment, and
+known closure limitations.
 
 ## Computational Comparison
 
