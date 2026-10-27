@@ -20,11 +20,14 @@ scattering, atmospheric absorption, and a reflecting lower surface.
 | [HW3 Question 1](HW3/README.md) | Meador-Weaver two-stream approximations | Eddington and quadrature reflectivity/transmissivity over a black surface |
 | [HW3 Question 2](HW3/README_question2.md) | Liou two-stream discrete ordinates | Independent analytical implementation and comparison with quadrature |
 | [HW4](HW4/README.md) | Liou discrete ordinates with a reflecting surface | All cloud-surface reflections, surface absorption, and atmospheric absorption |
+| [HW5 Questions 1-2](HW5/README.md) | Single-particle Mie scattering | Supplied Fortran program, extinction efficiency, and asymmetry factor versus particle size |
 
 The shared implementations are [Monte Carlo transport](models/monte_carlo.py),
 [Meador-Weaver two-stream](models/two_stream.py),
 [Liou discrete ordinates](models/liou_two_stream.py), and
 [reflecting-surface transport](models/surface_two_stream.py).
+The [Mie interface](models/mie.py) calls the course-supplied Fortran routine
+for homogeneous-sphere optical properties.
 
 ## Two-Stream Radiative Transfer
 
@@ -313,6 +316,7 @@ $$
 Radiative_Transfer_Models/
 |-- models/
 |   |-- liou_two_stream.py
+|   |-- mie.py
 |   |-- monte_carlo.py
 |   |-- surface_two_stream.py
 |   `-- two_stream.py
@@ -340,9 +344,19 @@ Radiative_Transfer_Models/
 |   |-- question4_results.md
 |   |-- figures/
 |   `-- tests/
+|-- HW5/
+|   |-- README.md
+|   |-- hw5_question2.py
+|   |-- question2_presentation.md
+|   |-- reference_mie.py
+|   |-- fortran/
+|   |-- reference/
+|   |-- results/
+|   `-- figures/
 |-- tests/
 |   |-- test_hw4.py
 |   |-- test_liou_two_stream.py
+|   |-- test_mie.py
 |   |-- test_monte_carlo.py
 |   `-- test_two_stream.py
 `-- requirements.txt
@@ -510,6 +524,25 @@ The [Question 4 report](HW4/question4_results.md) includes the reflectivity
 comparison table, captions, and a discussion of absorbing layers over dark
 and bright surfaces.
 
+## HW5: Single-Particle Mie Scattering
+
+HW5 uses the supplied `DMIESS` Fortran routine to calculate optical properties
+of homogeneous spheres. Unlike the atmospheric-layer models, its outputs are
+single-particle extinction/scattering efficiencies and the scattering-angle
+asymmetry factor. Question 2 reproduces the assignment curves over
+$0.05\leq x=2\pi r/\lambda\leq50$ for the two specified refractive indices:
+
+```bash
+python -m HW5.hw5_question2
+```
+
+`gfortran` is required and the Python driver compiles the supplied routine
+automatically. The [HW5 README](HW5/README.md) explains inputs, conventions,
+and validation; [presentation notes](HW5/question2_presentation.md) give
+bullet-wise interpretation. Combined and separate PNG/PDF plots and the
+reference CSV are tracked under `HW5/figures/` and `HW5/results/`.
+Questions 3-4 are not yet implemented.
+
 ## Computational Comparison
 
 The performance benchmark compares the original isotropic model (`g = 0`) and
@@ -552,8 +585,14 @@ rotation, two-stream coefficients, zero optical depth, conservative energy
 balance, and analytical agreement with independent ODE reference solutions.
 HW4 adds black-surface and perfectly reflecting limits, flux normalization,
 multiple-reflection sums, and volume-integrated atmospheric absorption.
+HW5 adds checks of the supplied Mie routine, size-parameter sweeps, a
+nonabsorbing control, wavelength invariance at fixed size parameter, and
+independent spherical-Bessel reference cases. Mie execution tests require
+`gfortran`; the independent reference additionally requires SciPy. These tests
+are explicitly skipped when their optional dependencies are unavailable.
 
 Most generated experiment figures and result files are excluded from Git and
 can be recreated by running the corresponding scripts. The HW4 reference
-CSV, PNG/PDF figures, and scientific report are versioned so they can be
+CSV, PNG/PDF figures, and scientific report, along with HW5's Question 1-2
+reference outputs, are versioned so they can be
 viewed directly on GitHub.

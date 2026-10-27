@@ -1,0 +1,12 @@
+build/
+results/*
+!results/question1_baseline.txt
+!results/question2_mie_results.csv
+
+figures/*
+!figures/question2_mie_size_parameter.png
+!figures/question2_mie_size_parameter.pdf
+!figures/question2_extinction.png
+!figures/question2_extinction.pdf
+!figures/question2_asymmetry.png
+!figures/question2_asymmetry.pdf
