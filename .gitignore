@@ -15,3 +15,12 @@ HW3/results/
 
 # Local copies of reference papers
 HW3/*.pdf
+
+# Keep only the HW4 reference figures used by the report.
+HW4/figures/*
+!HW4/figures/reflectivity_vs_albedo.png
+!HW4/figures/reflectivity_vs_albedo.pdf
+!HW4/figures/surface_net_flux_vs_albedo.png
+!HW4/figures/surface_net_flux_vs_albedo.pdf
+!HW4/figures/energy_partition_three_panels.png
+!HW4/figures/energy_partition_three_panels.pdf
