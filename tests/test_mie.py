@@ -16,7 +16,7 @@ except ImportError:
 
 @unittest.skipUnless(shutil.which("gfortran"), "gfortran is required")
 class MieTests(unittest.TestCase):
-    def test_only_documented_homogeneous_and_convergence_changes(self):
+    def test_only_documented_numerical_safeguards(self):
         root = Path(__file__).resolve().parents[1] / "HW5"
         original = (root / "reference/2026_HW5_F90.f.txt").read_text()
         supplied = original[original.index("      SUBROUTINE DMIESS("):].rstrip()
@@ -44,6 +44,11 @@ class MieTests(unittest.TestCase):
         ).replace(
             "      IF ( T(4) .LT. 1.0E-10 )   GO TO 100\n",
             "      IF ( T(4) .LT. 1.0E-10 .AND. N .GE. NSTOP ) GO TO 100\n",
+            1,
+        )
+        expected = expected.replace(
+            "      T(1)      =  ( 3.14159265359 * THETD(J) ) / 180.0\n",
+            "      T(1)      =  ( DACOS(-1.0D0) * THETD(J) ) / 180.0D0\n",
             1,
         )
         self.assertEqual((root / "fortran/dmiess.f").read_text().rstrip(), expected)

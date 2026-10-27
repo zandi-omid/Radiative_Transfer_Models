@@ -4,7 +4,7 @@ We are proceeding one question at a time. Question 1 establishes what the
 supplied program calculates and runs its existing baseline. Question 2
 reproduces extinction efficiency and asymmetry factor versus size parameter.
 Question 3 adds mass-specific extinction/absorption and asymmetry versus
-radius. Question 4 has not been implemented here.
+radius. Question 4 plots the full angular phase functions at fixed radius.
 
 The assignment and supplied source are in `/scratch/omidzandi/RTM/HW5/`.
 An unchanged copy of the source is kept in
@@ -317,7 +317,9 @@ while their scattered light is predominantly forward-directed.
 ### Numerical Fixes Required By The Wider Sweep
 
 The supplied source and the Question 1 baseline source remain unchanged.
-The shared `fortran/dmiess.f` working copy contains two scoped safeguards:
+The shared `fortran/dmiess.f` working copy contains the two safeguards
+introduced for the radius sweep, plus the angular-precision fix described
+under Question 4:
 
 1. **Exact homogeneous shortcut.** Identical core/shell indices with equal
    radii use the routine's existing homogeneous branch. This avoids a
@@ -348,3 +350,91 @@ tests passed. The original Question 2 CSV and figures are retained; recomputing
 them with the guarded routine changes extinction by at most
 $2.841\times10^{-7}$ and $g$ by $6.644\times10^{-8}$, below their documented
 validation tolerance and invisible at plot scale.
+
+## Question 4: Phase Functions Versus Scattering Angle
+
+```bash
+python -m HW5.hw5_question4
+python -m HW5.validate_question4
+```
+
+Both homogeneous spheres have radius 4 micrometers, wavelength 0.55
+micrometers, and size parameter $x=45.69589314$. The required materials are
+$m=1.5-0i$ (blue, nonabsorbing) and $m=2-0.66i$ (red, absorbing).
+The plot uses unpolarized light and exactly the requested 181 angles,
+$\Theta=0,1,\ldots,180$ degrees, for each material. Zero degrees is forward,
+90 degrees is sideways, and 180 degrees is backward relative to the incoming
+ray. No particle mass or density is involved in these phase functions.
+
+![Question 4 phase functions](figures/question4_phase_function.png)
+
+- [300-DPI PNG](figures/question4_phase_function.png) and
+  [vector PDF](figures/question4_phase_function.pdf).
+- [Presentation notes and caption](question4_presentation.md).
+- [All 362 angular values](results/question4_phase_function.csv).
+- [Normalization and first-moment audit](results/question4_moments.csv).
+- [Independent validation summary](results/question4_validation.csv).
+
+### Phase Function And Normalization
+
+The batch interface exposes `DMIESS`'s two mirrored angular tables and uses
+the original driver's normalization:
+
+$$
+P(\Theta)=\frac{2}{x^2Q_{\mathrm{scat}}}
+\left(|S_1(\Theta)|^2+|S_2(\Theta)|^2\right),\qquad
+\frac{1}{4\pi}\int P\,d\Omega
+=\frac12\int_{-1}^{1}P(\mu)\,d\mu=1.
+$$
+
+Here $\mu=\cos\Theta$. This $P$ is dimensionless and normalized to $4\pi$,
+matching the supplied course driver. A value above one denotes an angular
+concentration above the isotropic level, not a probability greater than one.
+The CSV also contains `phase_per_sr=P/(4*pi)`, whose integral over solid angle
+is one. Neither convention is weighted by single-scattering albedo: the phase
+function describes the directions of scattered radiation, conditional on
+scattering, rather than the fraction of incident energy surviving absorption.
+
+For each material the normalization and mean scattering cosine are checked
+on a separate 128-point Gauss-Legendre grid:
+
+$$
+g=\frac12\int_{-1}^{1}\mu P(\mu)\,d\mu.
+$$
+
+The resulting $g$ agrees with the coefficient-derived value returned by the
+Fortran routine: approximately 0.780943 (blue) and 0.865109 (red), consistent
+with the Question 3 results at radius 4 micrometers.
+
+### Numerical Validation And Angular Resolution
+
+The working routine's angle conversion originally used a real literal
+`3.14159265359`, evaluated at single precision before multiplication by a
+double-precision angle. This gave phase errors up to about
+$4.04\times10^{-5}$ and normalization errors near $4.82\times10^{-8}$.
+The conversion now uses `DACOS(-1.0D0)` and a double-precision degree factor.
+The original supplied reference and Question 1 source remain unchanged.
+The Questions 2-3 efficiency calculations use the zero-angle branch, so this
+angular-only fix does not change their calculated efficiencies or $g$.
+
+Independent validation uses spherical-Bessel Mie coefficients and Legendre
+polynomial derivatives, rather than the Fortran angular recurrences and
+mirrored-hemisphere storage. Maximum absolute phase differences across all
+362 samples are $1.535\times10^{-11}$ for blue and
+$2.092\times10^{-11}$ for red. Maximum relative differences are
+$3.104\times10^{-13}$ and $8.669\times10^{-14}$, respectively.
+Quadrature normalization and first-moment residuals are below
+$9\times10^{-12}$.
+
+The 1-degree trapezoidal normalization is only 0.986212 (blue) and 0.975034
+(red), because that coarse grid undersamples the narrow forward peak.
+These are angular integration errors, not losses of energy in the phase
+function. The 1-degree values are not renormalized or smoothed to conceal
+them. The fine quadrature check establishes the normalization independently
+of the plotting grid.
+
+Seven additional tests cover the requested angular samples, positivity,
+normalization, the first moment, agreement with the efficiency-only API,
+hemisphere mapping and repeated/unsorted angles, the independent angular
+series, the Rayleigh phase limit, and invalid inputs/workspace limits.
+The full repository suite passes all 54 tests.

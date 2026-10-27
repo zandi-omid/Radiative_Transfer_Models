@@ -20,7 +20,7 @@ scattering, atmospheric absorption, and a reflecting lower surface.
 | [HW3 Question 1](HW3/README.md) | Meador-Weaver two-stream approximations | Eddington and quadrature reflectivity/transmissivity over a black surface |
 | [HW3 Question 2](HW3/README_question2.md) | Liou two-stream discrete ordinates | Independent analytical implementation and comparison with quadrature |
 | [HW4](HW4/README.md) | Liou discrete ordinates with a reflecting surface | All cloud-surface reflections, surface absorption, and atmospheric absorption |
-| [HW5 Questions 1-3](HW5/README.md) | Single-particle Mie scattering | Efficiencies versus size parameter and mass-specific extinction/absorption versus radius |
+| [HW5](HW5/README.md) | Single-particle Mie scattering | Efficiencies, mass-specific extinction/absorption, asymmetry factor, and angular phase functions |
 
 The shared implementations are [Monte Carlo transport](models/monte_carlo.py),
 [Meador-Weaver two-stream](models/two_stream.py),
@@ -348,10 +348,13 @@ Radiative_Transfer_Models/
 |   |-- README.md
 |   |-- hw5_question2.py
 |   |-- hw5_question3.py
+|   |-- hw5_question4.py
 |   |-- question2_presentation.md
 |   |-- question3_presentation.md
+|   |-- question4_presentation.md
 |   |-- reference_mie.py
 |   |-- validate_question3.py
+|   |-- validate_question4.py
 |   |-- fortran/
 |   |-- reference/
 |   |-- results/
@@ -359,6 +362,7 @@ Radiative_Transfer_Models/
 |-- tests/
 |   |-- test_hw4.py
 |   |-- test_hw5_question3.py
+|   |-- test_hw5_question4.py
 |   |-- test_liou_two_stream.py
 |   |-- test_mie.py
 |   |-- test_monte_carlo.py
@@ -555,8 +559,18 @@ python -m HW5.hw5_question3
 The default wavelength is 0.55 micrometers and density is explicitly assumed
 to be 1 g/cm^3 because the assignment does not specify it. Both are
 configurable. See the [Question 3 presentation notes](HW5/question3_presentation.md)
-for the mass normalization, plots, and interpretation. Question 4 is not yet
-implemented.
+for the mass normalization, plots, and interpretation.
+
+Question 4 fixes the radius at 4 micrometers and plots phase functions for
+the same two materials at angles from 0 to 180 degrees in 1-degree steps:
+
+```bash
+python -m HW5.hw5_question4
+```
+
+The [Question 4 notes](HW5/question4_presentation.md) explain the angular
+patterns, phase-function normalization, and why the plotted grid needs a
+separate quadrature check for the narrow forward peak.
 
 ## Computational Comparison
 
@@ -605,6 +619,8 @@ nonabsorbing control, wavelength invariance at fixed size parameter, and
 independent spherical-Bessel reference cases. Mie execution tests require
 `gfortran`; the independent reference additionally requires SciPy. These tests
 are explicitly skipped when their optional dependencies are unavailable.
+The phase-function checks also cover forward/backward angle mapping,
+normalization, angular recovery of $g$, and the Rayleigh angular limit.
 
 Most generated experiment figures and result files are excluded from Git and
 can be recreated by running the corresponding scripts. The HW4 reference

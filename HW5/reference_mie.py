@@ -6,11 +6,12 @@ SciPy is needed only for this reference calculation and its tests.
 """
 
 import numpy as np
+from numpy.polynomial.legendre import Legendre
 from scipy.special import spherical_jn, spherical_yn
 
 
-def reference_efficiencies(x, real_index, absorption_index):
-    """Return Qext, Qscat and g for a positive scalar size parameter.
+def reference_coefficients(x, real_index, absorption_index):
+    """Return Mie orders and coefficients for a positive scalar size parameter.
 
     Use m=n-ik and the outgoing Hankel function of the second kind, matching
     the time/sign convention of the supplied Fortran routine.
@@ -34,6 +35,12 @@ def reference_efficiencies(x, real_index, absorption_index):
     b = (psi_mx * psi_x_prime - m * psi_x * psi_mx_prime) / (
         psi_mx * xi_x_prime - m * xi_x * psi_mx_prime
     )
+    return orders, a, b
+
+
+def reference_efficiencies(x, real_index, absorption_index):
+    """Return Qext, Qscat and g from the independent Bessel coefficients."""
+    orders, a, b = reference_coefficients(x, real_index, absorption_index)
     qext = 2 / x**2 * np.sum((2 * orders + 1) * (a + b).real)
     qscat = 2 / x**2 * np.sum((2 * orders + 1) * (abs(a)**2 + abs(b)**2))
     n = orders[:-1]
@@ -43,6 +50,27 @@ def reference_efficiencies(x, real_index, absorption_index):
     cross = np.sum((2 * orders + 1) / (orders * (orders + 1)) * (a * b.conj()).real)
     g = 4 * (adjacent + cross) / (x**2 * qscat)
     return float(qext), float(qscat), float(g)
+
+
+def reference_phase_function(x, real_index, absorption_index, angles_degrees):
+    """Calculate unpolarized 4*pi-normalized phase using Legendre derivatives.
+
+    This uses direct Bessel coefficients and polynomial evaluation, rather
+    than DMIESS's angular recurrences and mirrored-hemisphere storage.
+    """
+    orders, a, b = reference_coefficients(x, real_index, absorption_index)
+    mu = np.cos(np.deg2rad(np.asarray(angles_degrees, dtype=float)))
+    s1 = np.zeros_like(mu, dtype=complex)
+    s2 = np.zeros_like(mu, dtype=complex)
+    for n, an, bn in zip(orders, a, b):
+        polynomial = Legendre.basis(int(n))
+        pi_n = polynomial.deriv()(mu)
+        tau_n = n * (n + 1) * polynomial(mu) - mu * pi_n
+        weight = (2 * n + 1) / (n * (n + 1))
+        s1 += weight * (an * pi_n + bn * tau_n)
+        s2 += weight * (an * tau_n + bn * pi_n)
+    qscat = 2 / x**2 * np.sum((2 * orders + 1) * (abs(a)**2 + abs(b)**2))
+    return 2 * (abs(s1)**2 + abs(s2)**2) / (x**2 * qscat)
 
 
 def main():

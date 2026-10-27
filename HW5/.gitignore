@@ -4,6 +4,9 @@ results/*
 !results/question2_mie_results.csv
 !results/question3_mie_results.csv
 !results/question3_validation.csv
+!results/question4_phase_function.csv
+!results/question4_moments.csv
+!results/question4_validation.csv
 
 figures/*
 !figures/question2_mie_size_parameter.png
@@ -18,3 +21,5 @@ figures/*
 !figures/question3_specific_cross_sections.pdf
 !figures/question3_asymmetry.png
 !figures/question3_asymmetry.pdf
+!figures/question4_phase_function.png
+!figures/question4_phase_function.pdf

@@ -85,3 +85,57 @@ def mie_sweep(size_parameters, real_index, absorption_index, wavelength_um=0.55)
     if np.any(np.abs(output[:, 5]) > 1 + 1e-10):
         raise RuntimeError("DMIESS produced g outside [-1,1]; results were not clipped")
     return dict(zip(COLUMNS, output.T))
+
+
+def mie_phase_function(radius_um, real_index, absorption_index, wavelength_um=0.55,
+                       angles_degrees=None):
+    """Return unpolarized Mie P(theta), using the supplied 4*pi normalization.
+
+    Angles are relative to the incident ray: zero is forward, 180 is backward.
+    DMIESS computes angles in [0,90] and their reflected counterparts. Up to
+    183 distinct folded angles are supported per call. Default sampling is
+    0 through 180 degrees inclusive in one-degree steps.
+    """
+    if not np.isfinite(radius_um) or radius_um <= 0:
+        raise ValueError("radius_um must be positive and finite")
+    for name, value in (("real_index", real_index), ("wavelength_um", wavelength_um)):
+        if not np.isfinite(value) or value <= 0:
+            raise ValueError(f"{name} must be positive and finite")
+    if not np.isfinite(absorption_index) or absorption_index < 0:
+        raise ValueError("absorption_index must be nonnegative and finite")
+    angles = np.arange(181, dtype=float) if angles_degrees is None else np.atleast_1d(
+        np.asarray(angles_degrees, dtype=float)
+    )
+    if (angles.ndim != 1 or angles.size == 0 or np.any(~np.isfinite(angles))
+            or np.any((angles < 0) | (angles > 180))):
+        raise ValueError("angles_degrees must be a nonempty finite 1D array in [0,180]")
+    folded, inverse = np.unique(np.minimum(angles, 180.0 - angles), return_inverse=True)
+    if folded.size > 183:
+        raise ValueError("DMIESS supports at most 183 distinct folded angles per call")
+    x = 2 * np.pi * radius_um / wavelength_um
+    input_text = (
+        f"{x:.17g} {real_index:.17g} {absorption_index:.17g} {wavelength_um:.17g}\n"
+        f"{folded.size}\n" + " ".join(f"{angle:.17g}" for angle in folded) + "\n"
+    )
+    process = subprocess.run(
+        [str(build_mie()), "--phase"], input=input_text, text=True,
+        capture_output=True, check=True, timeout=120,
+    )
+    lines = process.stdout.splitlines()
+    if len(lines) != folded.size + 1:
+        raise RuntimeError("DMIESS returned an incomplete phase-function table")
+    metadata = np.fromstring(lines[0], sep=" ")
+    table = np.loadtxt(io.StringIO("\n".join(lines[1:])), ndmin=2)
+    if (metadata.shape != (7,) or table.shape != (folded.size, 3)
+            or not np.all(np.isfinite(metadata)) or not np.all(np.isfinite(table))):
+        raise RuntimeError("DMIESS returned malformed or nonfinite phase-function output")
+    np.testing.assert_allclose(table[:, 0], folded, rtol=0, atol=1e-12)
+    phase = np.where(angles > 90, table[inverse, 2], table[inverse, 1])
+    if np.any(phase < 0):
+        raise RuntimeError("DMIESS returned a negative phase function; values were not clipped")
+    return {
+        **dict(zip(COLUMNS, metadata)),
+        "angle_deg": angles,
+        "phase_4pi": phase,
+        "phase_per_sr": phase / (4 * np.pi),
+    }

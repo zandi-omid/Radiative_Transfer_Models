@@ -88,7 +88,7 @@ C
       SI2THT(J) = 0.0
       GO TO 30
    24 IF ( THETD(J) .GE. 90.0 )  GO TO 25
-      T(1)      =  ( 3.14159265359 * THETD(J) ) / 180.0
+      T(1)      =  ( DACOS(-1.0D0) * THETD(J) ) / 180.0D0
       CSTHT(J)  =  DCOS( T(1) )
       SI2THT(J) =  1.0 - CSTHT(J)**2
       GO TO 30
