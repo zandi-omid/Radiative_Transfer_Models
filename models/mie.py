@@ -14,6 +14,25 @@ EXECUTABLE = ROOT / "HW5/build/mie_batch"
 COLUMNS = ("x", "radius_um", "qext", "qscat", "qabs", "g", "omega0")
 
 
+def mass_specific_cross_section(efficiency, radius_um, density_g_cm3):
+    """Convert dimensionless Q to cross-section per mass in m^2/g.
+
+    C=pi*r^2*Q and mass=(4/3)*pi*r^3*rho give 3Q/(4*rho*r).
+    With r in micrometers and rho in g/cm^3, the unit conversions cancel
+    numerically, giving 0.75*Q/(rho*r). Preserve signed roundoff residuals.
+    """
+    efficiency = np.asarray(efficiency, dtype=float)
+    radius = np.asarray(radius_um, dtype=float)
+    if np.any(~np.isfinite(efficiency)):
+        raise ValueError("efficiency must be finite")
+    if np.any(~np.isfinite(radius)) or np.any(radius <= 0):
+        raise ValueError("radius_um must be positive and finite")
+    if not np.isfinite(density_g_cm3) or density_g_cm3 <= 0:
+        raise ValueError("density_g_cm3 must be positive and finite")
+    specific = 0.75 * efficiency / (density_g_cm3 * radius)
+    return float(specific) if specific.ndim == 0 else specific
+
+
 def build_mie():
     """Compile when needed, with bounds checks and floating-point traps."""
     if EXECUTABLE.exists() and all(

@@ -24,6 +24,10 @@ C
      2              ( FNAP,TD(1) ),   (FNBP,TE(1) )
 C
       IFLAG = 1
+C     Equal core/shell material with equal radii is exactly homogeneous.
+C     Avoid removable singularities in the unnecessary coated-sphere algebra.
+      IF ( R .EQ. RO .AND. RE2 .EQ. RFR .AND.
+     1     TMAG2 .EQ. RFI ) IFLAG = 2
       IF ( R/RO .LT. 1.0E-06 )   IFLAG = 2
 C
       IF ( JX .LE. IT )   GO TO 20
@@ -33,6 +37,8 @@ C
    20 RF =  DCMPLX( RFR,  -RFI )
       RC =  DCMPLX( RE2,-TMAG2 )
       X  =  RO * WVNO
+C     Do not terminate at an isolated small coefficient before the tail.
+      NSTOP = CEILING( X + 4.0D0 * X**(1.0D0/3.0D0) + 2.0D0 )
       K1 =  RC * WVNO
       K2 =  RF * WVNO
       K3 =  DCMPLX( WVNO, 0.0d+00 )
@@ -286,8 +292,8 @@ C
       FN1  =  ( TC1 * TA(3)  -  TA(1) ) /  ( TC1 * WFN(2) - WFN(1) )
       FN2  =  ( TC2 * TA(3)  -  TA(1) ) /  ( TC2 * WFN(2) - WFN(1) )
       M    =  WVNO * R
-      IF ( N .LT. M )   GO TO 1002
       IF ( IFLAG .EQ. 2 )   GO TO 1001
+      IF ( N .LT. M )   GO TO 1002
       IF ( CDABS(  ( FN1-FNA ) / FN1  )  .LT.  1.0E-09   .AND.
      1     CDABS(  ( FN2-FNB ) / FN2  )  .LT . 1.0E-09  )    IFLAG = 2
       IF ( IFLAG .EQ. 1 )   GO TO 1002
@@ -330,7 +336,7 @@ C
        ELTRMX(4,J,2) =ELTRMX(4,J,2)+T(1)*(-TC(2)*PI(3,J)+TB(2)*TAU(3,J))
    80 continue
 C
-      IF ( T(4) .LT. 1.0E-10 )   GO TO 100
+      IF ( T(4) .LT. 1.0E-10 .AND. N .GE. NSTOP ) GO TO 100
       N = N + 1
       DO 90 J = 1,JX
          PI(1,J)   =   PI(2,J)

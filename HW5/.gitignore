@@ -2,6 +2,8 @@ build/
 results/*
 !results/question1_baseline.txt
 !results/question2_mie_results.csv
+!results/question3_mie_results.csv
+!results/question3_validation.csv
 
 figures/*
 !figures/question2_mie_size_parameter.png
@@ -10,3 +12,9 @@ figures/*
 !figures/question2_extinction.pdf
 !figures/question2_asymmetry.png
 !figures/question2_asymmetry.pdf
+!figures/question3_mie_radius.png
+!figures/question3_mie_radius.pdf
+!figures/question3_specific_cross_sections.png
+!figures/question3_specific_cross_sections.pdf
+!figures/question3_asymmetry.png
+!figures/question3_asymmetry.pdf

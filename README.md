@@ -20,7 +20,7 @@ scattering, atmospheric absorption, and a reflecting lower surface.
 | [HW3 Question 1](HW3/README.md) | Meador-Weaver two-stream approximations | Eddington and quadrature reflectivity/transmissivity over a black surface |
 | [HW3 Question 2](HW3/README_question2.md) | Liou two-stream discrete ordinates | Independent analytical implementation and comparison with quadrature |
 | [HW4](HW4/README.md) | Liou discrete ordinates with a reflecting surface | All cloud-surface reflections, surface absorption, and atmospheric absorption |
-| [HW5 Questions 1-2](HW5/README.md) | Single-particle Mie scattering | Supplied Fortran program, extinction efficiency, and asymmetry factor versus particle size |
+| [HW5 Questions 1-3](HW5/README.md) | Single-particle Mie scattering | Efficiencies versus size parameter and mass-specific extinction/absorption versus radius |
 
 The shared implementations are [Monte Carlo transport](models/monte_carlo.py),
 [Meador-Weaver two-stream](models/two_stream.py),
@@ -347,14 +347,18 @@ Radiative_Transfer_Models/
 |-- HW5/
 |   |-- README.md
 |   |-- hw5_question2.py
+|   |-- hw5_question3.py
 |   |-- question2_presentation.md
+|   |-- question3_presentation.md
 |   |-- reference_mie.py
+|   |-- validate_question3.py
 |   |-- fortran/
 |   |-- reference/
 |   |-- results/
 |   `-- figures/
 |-- tests/
 |   |-- test_hw4.py
+|   |-- test_hw5_question3.py
 |   |-- test_liou_two_stream.py
 |   |-- test_mie.py
 |   |-- test_monte_carlo.py
@@ -541,7 +545,18 @@ automatically. The [HW5 README](HW5/README.md) explains inputs, conventions,
 and validation; [presentation notes](HW5/question2_presentation.md) give
 bullet-wise interpretation. Combined and separate PNG/PDF plots and the
 reference CSV are tracked under `HW5/figures/` and `HW5/results/`.
-Questions 3-4 are not yet implemented.
+Question 3 plots mass-specific extinction, absorption, and $g$ versus radius
+for $m=2-0.66i$ and $m=1.5-0i$:
+
+```bash
+python -m HW5.hw5_question3
+```
+
+The default wavelength is 0.55 micrometers and density is explicitly assumed
+to be 1 g/cm^3 because the assignment does not specify it. Both are
+configurable. See the [Question 3 presentation notes](HW5/question3_presentation.md)
+for the mass normalization, plots, and interpretation. Question 4 is not yet
+implemented.
 
 ## Computational Comparison
 

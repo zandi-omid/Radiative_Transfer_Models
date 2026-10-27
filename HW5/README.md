@@ -3,7 +3,8 @@
 We are proceeding one question at a time. Question 1 establishes what the
 supplied program calculates and runs its existing baseline. Question 2
 reproduces extinction efficiency and asymmetry factor versus size parameter.
-Questions 3-4 have not been implemented here.
+Question 3 adds mass-specific extinction/absorption and asymmetry versus
+radius. Question 4 has not been implemented here.
 
 The assignment and supplied source are in `/scratch/omidzandi/RTM/HW5/`.
 An unchanged copy of the source is kept in
@@ -149,8 +150,9 @@ python -m HW5.hw5_question2
 ```
 
 The Python driver calls a batch Fortran interface to the supplied `DMIESS`
-routine. `fortran/dmiess.f` preserves its routine statements; no Mie core
-algorithm was rewritten. Both inner and outer radii are set to the current
+routine. The original routine is preserved under `reference/`; the shared
+working copy now contains the homogeneous-sphere and convergence safeguards
+documented under Question 3 below. Both inner and outer radii are set to the current
 particle radius for every call, and both material indices are identical.
 The driver uses double-precision inputs and pi, without changing the
 Question 1 baseline. The efficiencies and asymmetry factor come directly
@@ -220,10 +222,129 @@ $6.644\times10^{-8}$ in $g$. The agreement is sufficient for reproducing
 the assignment curves, but is not a claim of machine-precision accuracy
 from the legacy routine.
 
-The six Mie tests cover preservation of the supplied subroutine, the full
+The Mie tests cover the documented scope of changes to the supplied routine, the full
 grid, independent reference cases, a nonabsorbing control
 ($Q_{\mathrm{ext}}=Q_{\mathrm{scat}}$), invariance at fixed $x$, and invalid
 inputs. Compilation includes array bounds checks and floating-point traps.
-The original routine's convergence thresholds and workspace limits remain
-in effect; ranges beyond the homework's $0.05\leq x\leq50$ have not been
-validated here.
+Question 3 also checks compatibility with the saved Question 2 curves to
+$5\times10^{-7}$ absolute tolerance. The original workspace limits remain
+in effect; the wider radius range is validated separately below.
+
+## Question 3: Mass-Specific Cross-Sections Versus Radius
+
+```bash
+python -m HW5.hw5_question3
+python -m HW5.validate_question3
+```
+
+The two required cases are $m=2-0.66i$ (absorbing) and $m=1.5-0i$
+(nonabsorbing). Both use homogeneous spheres with equal core and outer radii.
+The radius range is 0.001-10 micrometers, sampled at 5,451 radii per material.
+Logarithmic sampling below 0.1 micrometers resolves the small-particle regime;
+0.002-micrometer steps above that radius resolve the interference structure.
+
+### Wavelength And Density Assumption
+
+The wavelength is 0.55 micrometers, following the supplied driver's first
+wavelength and its Question 3 radius conversion. The assignment does not
+state a particle mass density. The reference comparison therefore explicitly
+assumes **1 g/cm^3 for both materials**, consistent with the scale of the
+supplied plot. This is a mass-normalization assumption, not a measured density
+or an identification of either material. It is recorded in the CSV and figure.
+Using another density changes all specific cross-sections in inverse
+proportion, while leaving efficiencies and $g$ unchanged.
+
+Both settings are configurable, for example:
+
+```bash
+python -m HW5.hw5_question3 --wavelength-um 0.55 --density-g-cm3 1.0
+```
+
+These options regenerate the Question 3 reference filenames with the chosen
+parameters; the CSV and figure always state the parameters actually used.
+
+### Mass Normalization
+
+For a spherical particle, its mass is $M_p=(4/3)\pi r^3\rho_p$ and its
+extinction cross-section is $C_{\mathrm{ext}}=\pi r^2Q_{\mathrm{ext}}$.
+The specific cross-section is
+
+$$
+\beta_{\mathrm{ext}}=\frac{C_{\mathrm{ext}}}{M_p}
+=\frac{3Q_{\mathrm{ext}}}{4\rho_p r},\qquad
+\beta_{\mathrm{abs}}=\frac{3Q_{\mathrm{abs}}}{4\rho_p r}.
+$$
+
+In the code's units, $r$ is in micrometers, $\rho_p$ is in g/cm^3, and
+$\beta$ is in m^2/g. Converting area to m^2 and mass to grams gives the
+numerical expression `0.75 * Q / (density_g_cm3 * radius_um)`. No particle
+number concentration is needed for this single-particle mass-specific quantity.
+
+### Figures, Results, And Presentation
+
+![Question 3 specific extinction, absorption and asymmetry versus radius](figures/question3_mie_radius.png)
+
+- [Combined PNG](figures/question3_mie_radius.png) and
+  [PDF](figures/question3_mie_radius.pdf).
+- [Specific cross-sections PNG](figures/question3_specific_cross_sections.png)
+  and [PDF](figures/question3_specific_cross_sections.pdf).
+- [Asymmetry PNG](figures/question3_asymmetry.png) and
+  [PDF](figures/question3_asymmetry.pdf).
+- [Presentation notes and caption](question3_presentation.md).
+- [10,902 numerical cases](results/question3_mie_results.csv).
+- [Independent validation summary](results/question3_validation.csv).
+
+Red denotes the absorbing case and blue the nonabsorbing case. Extinction
+is solid; absorption is dashed. The top panel uses logarithmic axes with the
+same 0.1-100 m^2/g vertical range as the assignment. Values below that range
+remain in the CSV. All figures have 300-DPI PNG and vector PDF versions.
+
+The nonabsorbing material has zero physical absorption. Its maximum
+absolute numerical $Q_{\mathrm{abs}}$ is $1.332\times10^{-15}$, and the
+signed specific absorption residual lies between approximately
+$-3.24\times10^{-15}$ and $3.62\times10^{-15}$ m^2/g. These roundoff
+residuals are preserved in the CSV. A zero curve cannot be shown on a
+logarithmic axis, so it is explicitly identified in the legend rather than
+replaced with an arbitrary positive floor.
+
+At the default density, the absorbing case has a sampled specific-extinction
+maximum of 19.4133 m^2/g near radius 0.102 micrometers; the nonabsorbing case
+peaks near 10.0086 m^2/g at radius 0.310 micrometers. Small absorbing particles
+have a nearly constant mass-specific absorption around 7.156 m^2/g. At large
+radii both materials' specific extinction decreases approximately as $1/r$,
+while their scattered light is predominantly forward-directed.
+
+### Numerical Fixes Required By The Wider Sweep
+
+The supplied source and the Question 1 baseline source remain unchanged.
+The shared `fortran/dmiess.f` working copy contains two scoped safeguards:
+
+1. **Exact homogeneous shortcut.** Identical core/shell indices with equal
+   radii use the routine's existing homogeneous branch. This avoids a
+   removable singularity in coated-sphere expressions at, for example,
+   $r=0.55$ micrometers for $m=1.5$ and $\lambda=0.55$ micrometers.
+   The per-order homogeneous coefficients are assigned before the
+   coated-sphere-specific core-size check. No radius perturbation or
+   artificial absorption is introduced.
+2. **Series convergence guard.** An isolated small coefficient is not enough
+   to stop the series. The original squared-coefficient threshold of
+   $10^{-10}$ is applied only after the size-based order estimate
+   $N\geq\lceil x+4x^{1/3}+2\rceil$. At radius 8.554 micrometers in the
+   nonabsorbing case, early termination previously missed about
+   $4.93\times10^{-5}$ in extinction efficiency. The guard resolves it.
+
+The full 10,902-case comparison with the independent direct Bessel series
+now gives maximum absolute differences of $1.423\times10^{-11}$ in
+extinction/scattering efficiencies, $1.006\times10^{-11}$ in $g$,
+$1.472\times10^{-12}$ m^2/g in specific extinction, and
+$2.132\times10^{-14}$ m^2/g in specific absorption. The reference converts
+area and particle mass explicitly in SI lengths and grams, independently
+checking the mass normalization.
+
+Regression tests cover the formerly singular inputs, premature termination,
+Question 2 compatibility, the full radius grid, zero absorption, density
+scaling, explicit area/mass units, and the Rayleigh limits. All 47 repository
+tests passed. The original Question 2 CSV and figures are retained; recomputing
+them with the guarded routine changes extinction by at most
+$2.841\times10^{-7}$ and $g$ by $6.644\times10^{-8}$, below their documented
+validation tolerance and invisible at plot scale.
