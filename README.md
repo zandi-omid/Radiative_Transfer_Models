@@ -180,6 +180,7 @@ $$
 ```text
 Radiative_Transfer_Models/
 |-- models/
+|   |-- liou_two_stream.py
 |   |-- monte_carlo.py
 |   `-- two_stream.py
 |-- HW1/
@@ -194,8 +195,12 @@ Radiative_Transfer_Models/
 |   `-- compare_isotropic_hg_performance.py
 |-- HW3/
 |   |-- README.md
-|   `-- hw3_question1.py
+|   |-- README_question2.md
+|   |-- hw3_question1.py
+|   |-- hw3_question2.py
+|   `-- validate_question1.py
 |-- tests/
+|   |-- test_liou_two_stream.py
 |   |-- test_monte_carlo.py
 |   `-- test_two_stream.py
 `-- requirements.txt
@@ -275,7 +280,7 @@ This uses `N = 10,000` and `g = 0.75` throughout and evaluates
 
 Numerical tables and figures are written to `HW2/results/`.
 
-## HW3: Meador-Weaver Two-Stream Model
+## HW3: Two-Stream Models
 
 HW3 Question 1 implements the analytical Eddington and quadrature two-stream
 approximations for a homogeneous layer over a black surface. It uses positive
@@ -292,7 +297,35 @@ Four figures and a CSV table are saved under `HW3/results/`. See
 [`HW3/README.md`](HW3/README.md) for the equations, numerical treatment, and
 known closure limitations.
 
+Question 2 independently implements Liou's two-stream discrete-ordinate
+solution and compares it with the Meador-Weaver quadrature method:
+
+```bash
+python -m HW3.hw3_question2
+```
+
+The two formulations are algebraically equivalent for the same first-order
+phase-function expansion. The comparison retains the direct and diffuse parts
+of transmitted flux and uses the exact conservative-scattering limit. See
+[`HW3/README_question2.md`](HW3/README_question2.md) for the Liou equations and
+interpretation.
+
+## HW4: Reflecting Surface
+
+HW4 adds a Lambertian surface to the Liou discrete-ordinate model and sums all
+atmosphere-surface reflections. It compares nearly conservative and absorbing
+layers over surfaces ranging from black to perfectly reflecting:
+
+```bash
+python -m HW4.hw4
+```
+
+See [HW4/README.md](HW4/README.md) for the diffuse coefficients, normalization,
+validation, and interpretation. Numerical output is in `HW4/hw4_results.csv`
+and PNG/PDF figures are in `HW4/figures/`.
+
 ## Computational Comparison
+
 
 The performance benchmark compares the original isotropic model (`g = 0`) and
 the nonabsorbing HG model (`g = 0.75`) under the same conditions:
